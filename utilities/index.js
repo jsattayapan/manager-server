@@ -104,86 +104,119 @@ const sendTimeScanLineNofify = ({employee, scan}) => {
   }
 };
     
+    sendFlexToLine({payload: payload2, to: tayLine})
+}
 
-        
-    
-    
-    
+const sendOTLineNofify = (data) => {
     const payload = {
-  "type": "flex",
-  "altText": employee.name + ' ' + scan.typeText + ' ' + scan.time,
-  "contents": {
-    "type": "bubble",
-    "hero": {
+  type: "flex",
+  altText: `${data.name} เพิ่ม OT`,
+  contents: {
+    type: "bubble",
+    body: {
+      type: "box",
+      layout: "vertical",
+      contents: [
+        {
+          type: "box",
+          layout: "horizontal",
+          contents: [
+            {
+              type: "box",
+              layout: "vertical",
+              flex: 1,
+              contents: [
+                {
       "type": "image",
-      "url": "https://tunit3-samed.ap.ngrok.io/public/employee/"+ employee.imageUrl,
+      "url": "https://tunit3-samed.ap.ngrok.io/public/employee/"+ data.imageUrl,
       "size": "full",
       "aspectRatio": "1:1",
       "aspectMode": "cover"
-    },
-    "body": {
-      "type": "box",
-      "layout": "vertical",
-      "spacing": "sm",
-      "contents": [
-        {
-          "type": "text",
-          "text": "🌞 " + scan.typeText,
-          "weight": "bold",
-          "size": "md",
-          "wrap": true
-        },
-        {
-          "type": "box",
-          "layout": "baseline",
-          "spacing": "sm",
-          "contents": [
-            {
-              "type": "text",
-              "text": "📅 " + scan.date,
-              "size": "sm",
-              "color": "#555555",
-              "flex": 0
+    }
+              ]
             },
             {
-              "type": "text",
-              "text": "🕒" + scan.time,
-              "size": "sm",
-              "color": "#555555",
-              "flex": 0
+              type: "box",
+              layout: "vertical",
+              flex: 1,
+              contents: [
+                {
+                  type: "text",
+                  text: `✅ OT By Manager`,
+                  weight: "bold",
+                  size: "md",
+                  wrap: true,
+                    "margin": "md",
+                },
+                {
+                  type: "text",
+                  text: `📅 ${data.date}`,
+                  size: "sm",
+                  color: "#555555",
+                    "margin": "md",
+                },
+                {
+                  type: "text",
+                  text: `🕒 ${data.ot_time}`,
+                  size: "sm",
+                  color: "#555555",
+                    "margin": "md",
+                },
+                {
+                  type: "text",
+                  text: `✍️ ${data.createBy}`,
+                  size: "sm",
+                  color: "#111111",
+                    "margin": "md",
+                }
+              ]
             }
           ]
         },
         {
-          "type": "text",
-          "text": "🏢 "+ scan.location,
-          "size": "sm",
-          "color": "#111111"
+          type: "separator",
+          margin: "md"
         },
         {
-          "type": "text",
-          "text": "👩‍ " + employee.name,
-          "size": "sm",
-          "color": "#111111",
-          "wrap": true
+          type: "box",
+          layout: "vertical",
+          contents: [
+            {
+              type: "text",
+              text: `👩‍ ${data.name}`,
+              size: "sm",
+              color: "#111111",
+              wrap: true
+            },
+            {
+              type: "text",
+              text: `⭐ ${data.role}`,
+              size: "sm",
+              color: "#111111"
+            },
+            {
+              type: "text",
+              text: `⏰ ${data.timetable}`,
+              size: "sm",
+              color: "#d32f2f"
+            },
+              {
+          type: "separator",
+          margin: "md"
         },
-        {
-          "type": "text",
-          "text": "⭐" + employee.role,
-          "size": "sm",
-          "color": "#111111"
-        },
-        {
-          "type": "text",
-          "text": "⏰ " + scan.timetable,
-          "size": "sm",
-          "color": "#d32f2f"
+              {
+              type: "text",
+              text: `⚠️ ${data.remark}`,
+              size: "sm",
+              color: "#d32f2f"
+            }
+          ]
         }
       ]
     }
   }
-}
-    sendFlexToLine({payload: payload2, to: tayLine})
+};
+    sendFlexToLine({payload, to: tayLine})
 }
 
 
@@ -214,5 +247,6 @@ const sendFlexToLine = ({
 }
 
 module.exports = {
-    sendTimeScanLineNofify
+    sendTimeScanLineNofify,
+    sendOTLineNofify
 }

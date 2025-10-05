@@ -86,6 +86,16 @@ router.post('/hrProcessLeaveRequest', async (req, res) => {
     }
 })
 
+router.post('/hrProcessTimeScanRequest', async (req, res) => {
+    try{
+        const result = await ft.hrProcessTimeScanRequest(req.body)
+        res.json(result)
+     }catch (e){
+        console.log(e)
+        res.json({status:false, msg: 'Error'})
+    }
+})
+
 router.post('/getEmployeeLeaveByEmployeeIdMonth', async (req, res) => {
     try{
         res.json({status: true, leaveList: []})
@@ -118,6 +128,134 @@ router.post('/getLeaveRequestByEmployeeId', async (req, res) => {
 router.post('/getEmployeePublicHoliday', async (req, res) => {
     try{
         const result = await ft.getEmployeePublicHoliday(req.body)
+        res.json(result)
+     }catch (e){
+        console.log(e)
+        res.json({status:false, msg: 'Error'})
+    }
+})
+
+router.get('/getPublicHolidayList', async (req, res) => {
+    try{
+        const result = await ft.getPublicHolidayList()
+        res.json(result)
+     }catch (e){
+        console.log(e)
+        res.json({status:false, msg: 'Error'})
+    }
+})
+
+router.post('/getEmployeeTimetableByDateByDepartmentId', async (req, res) => {
+    try{
+        const {departmentId, date} = req.body 
+        const employeeList = await ft.getEmployeeListByDepartmentId(departmentId)
+        const leaveRequestList = await ft.getLeaveRequestList()
+        const scanRequestList = await ft.getScanRequestList()
+        const timetableRequestList = await ft.getTimetableRequestList()
+        let result = []
+        for(const emp of employeeList){
+             const timetable = await ft.getTimetableByIdAndDate(emp.id, date)
+                const scanList = await ft.getScanByIdAndDate(emp.id, date)
+                const ot_timetable = await ft.getOtByIdAndDate(emp.id,date)
+                const dayOffList = await ft.getLeaveByIdAndDate(emp.id, date)
+                let obj = {
+                    name: emp.name,
+                    role: emp.role,
+                    date,
+                    imageUrl: emp.imageUrl,
+                    startTime: timetable ? timetable.startTime : '',
+                    breakTime: timetable ? timetable.breakTime : '', 
+                    continueTime: timetable ? timetable.continueTime : '',
+                    endTime: timetable ? timetable.endTime : '',
+                    nightShift: timetable ? timetable.nightShift: 0,
+                    dayOff: timetable ?  timetable.dayOff ? true : false : false,
+                    weeklyDayOff: timetable ? timetable.dayOff ? true : false : false,
+                    startScan: scanList.find(x => x.type === 'start'),
+                    breakScan: scanList.find(x => x.type === 'break'),
+                    continueScan: scanList.find(x => x.type === 'continue'),
+                    endScan: scanList.find(x => x.type === 'end'),
+                    dayOffType: dayOffList ? dayOffList.type : '',
+                    timetableRequestList: timetableRequestList.filter(x => (x.employeeId === emp.id && x.date === date)),
+                    leaveRequestList: leaveRequestList.filter(x => (x.employeeId === emp.id && x.date === date)),
+                    timeScanRequestList: scanRequestList.filter(x => (x.employeeId === emp.id && x.date === date)),
+                    ot_timetable: ot_timetable ? `${helper.formatHHmm(ot_timetable.start)} - ${helper.formatHHmm(ot_timetable.end)}` : ''
+                }
+                result = [...result, obj]
+        }
+        
+        res.json({status:true, employeeList: result})
+     }catch (e){
+        console.log(e)
+        res.json({status:false, msg: 'Error'})
+    }
+})
+
+router.post('/getMonthlyTimeScanByEmployeeId', async (req, res) => {
+    try{
+       const result = await ft.getMonthlyTimeScanByEmployeeId(req.body)
+        res.json({status:true, payload: result})
+     }catch (e){
+        console.log(e)
+        res.json({status:false, msg: 'Error'})
+    }
+})
+
+router.post('/submitTimeScanRequest', async (req, res) => {
+    try{
+       const result = await ft.submitTimeScanRequest(req.body)
+        res.json(result)
+     }catch (e){
+        console.log(e)
+        res.json({status:false, msg: 'Error'})
+    }
+})
+
+router.post('/submitLeaveRequest', async (req, res) => {
+    try{
+       const result = await ft.submitLeaveRequest(req.body)
+        res.json(result)
+     }catch (e){
+        console.log(e)
+        res.json({status:false, msg: 'Error'})
+    }
+})
+
+router.post('/submitTimetableRequest', async (req, res) => {
+    try{
+       const result = await ft.submitTimetableRequest(req.body)
+        res.json(result)
+     }catch (e){
+        console.log(e)
+        res.json({status:false, msg: 'Error'})
+    }
+})
+
+router.post('/deleteEmployeeTimetable', async (req, res) => {
+    try{
+       const result = await ft.deleteEmployeeTimetable(req.body)
+        res.json(result)
+     }catch (e){
+        console.log(e)
+        res.json({status:false, msg: 'Error'})
+    }
+})
+
+router.post('/submitOTByManager', async (req, res) => {
+    try{
+       const result = await ft.submitOTByManager(req.body)
+       if(result.status){
+           ft.sendOTNotifyToLine(req.body)
+       }
+        res.json(result)
+     }catch (e){
+        console.log(e)
+        res.json({status:false, msg: 'Error'})
+    }
+})
+
+router.post('/submitEmployeeTimetable', async (req, res) => {
+    try{
+       const result = await ft.submitEmployeeTimetable(req.body)
         res.json(result)
      }catch (e){
         console.log(e)
