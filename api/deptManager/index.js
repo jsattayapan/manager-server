@@ -42,14 +42,15 @@ router.get('/getEmployeeUnapproveRequest', async (req, res) => {
                     nightShift: timetable ? timetable.nightShift: 0,
                     dayOff: timetable ?  timetable.dayOff ? true : false : false,
                     weeklyDayOff: timetable ? timetable.dayOff ? true : false : false,
-                    startScan: scanList.find(x => x.type === 'start'),
-                    breakScan: scanList.find(x => x.type === 'break'),
-                    continueScan: scanList.find(x => x.type === 'continue'),
-                    endScan: scanList.find(x => x.type === 'end'),
+                    startScan: (scanList.find(x => x.type === 'start') || {}).time || '',
+                    breakScan: (scanList.find(x => x.type === 'break') || {}).time || '',
+                    continueScan: (scanList.find(x => x.type === 'continue') || {}).time || '',
+                    endScan: (scanList.find(x => x.type === 'end') || {}).time || '',
                     dayOffType: dayOffList ? dayOffList.type : '',
                     timetableRequestList: timetableRequestList.filter(x => (x.employeeId === id && x.date === date)),
                     leaveRequestList: leaveRequestList.filter(x => (x.employeeId === id && x.date === date)),
                     timeScanRequestList: scanRequestList.filter(x => (x.employeeId === id && x.date === date)),
+                    scanTimeRequestList: scanRequestList.filter(x => (x.employeeId === id && x.date === date)),
                     ot_timetable: ot_timetable ? `${helper.formatHHmm(ot_timetable.start)} - ${helper.formatHHmm(ot_timetable.end)}` : ''
                 }
                 if(!(obj.timetableRequestList.length === 0 && obj.leaveRequestList.length === 0 && obj.timeScanRequestList.length === 0)){

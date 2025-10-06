@@ -29,6 +29,7 @@ app.get('/', (req, res) => {
     app.use('/fingerScanDevice', require('./api/fingerScanner'));
     app.use('/login', require('./api/authentication'))
     app.use('/deptManager', require('./api/deptManager'))
+    app.use('/hr', require('./api/hr'))
 
 
 // Start server
