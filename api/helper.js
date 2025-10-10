@@ -55,11 +55,31 @@ function calcScanMinutesWithinSchedule(scanIn, scanOut, scheduleIn, scheduleOut)
   return effectiveOut.diff(effectiveIn, 'minutes');
 }
 
+function formatMinutesCustom(totalMinutes) {
+  const minutesPerHour = 60;
+  const hoursPerDay = 10; // 👈 10 hours = 1 day
+  const minutesPerDay = hoursPerDay * minutesPerHour;
+
+  const days = Math.floor(totalMinutes / minutesPerDay);
+  const remainingMinutesAfterDays = totalMinutes % minutesPerDay;
+
+  const hours = Math.floor(remainingMinutesAfterDays / minutesPerHour);
+  const minutes = remainingMinutesAfterDays % minutesPerHour;
+
+  let result = '';
+  if (days > 0) result += `${days} Day${days > 1 ? 's' : ''} `;
+  if (hours > 0) result += `${hours} Hr `;
+  if (minutes > 0 || result === '') result += `${minutes} m`;
+
+  return result.trim();
+}
+
 
 module.exports = {
     diffMinutes,
     createDateRange,
     formatHHmm,
     calcScanMinutesWithinSchedule,
-    getMinutesBetween
+    getMinutesBetween,
+    formatMinutesCustom
 }

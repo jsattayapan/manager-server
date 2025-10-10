@@ -63,20 +63,20 @@ const hrProcessTimetableRequest = async ({requestId, status}) => {
             nightShift
         })
         await hrDB('employee_logs').insert({
-            employeeId, 
+            employeeId,
             detail: `อนุมัติปรับเวลางาน (${date}): ${breakTime ?
             `${helper.formatHHmm(startTime)} - ${helper.formatHHmm(breakTime)}, ${helper.formatHHmm(continueTime)} - ${helper.formatHHmm(endTime)}` :
-            `${helper.formatHHmm(startTime)} - ${helper.formatHHmm(endTime)}` 
+            `${helper.formatHHmm(startTime)} - ${helper.formatHHmm(endTime)}`
         }`,
             createBy: 'olotem321',
             timestamp: new Date()
         })
         }
     return {status: true}
-    
+
 }
 
-const hrProcessLeaveRequest = async ({requestId, status}) => {
+const hrProcessLeaveRequest = async ({requestId, status, approveBy}) => {
     if(!status){
         await hrDB('leave_request').where({id: requestId}).update({status: 'Decline'})
         return {status: true}
@@ -84,7 +84,7 @@ const hrProcessLeaveRequest = async ({requestId, status}) => {
         const requestInfo = await hrDB('leave_request').where({id: requestId}).first()
         let { publicHolidayId, type, remark, numberOfDay, nightShift, employeeId, date, createBy } = requestInfo
          let employee = await hrDB('employee').where({id: employeeId}).first()
-        
+
         if(type === 'ลาป่วย'){
             if(employee.remainSickLeaveDay < numberOfDay){
                 return { status: false, msg: 'สิทธิการลาไม่เพียงพอ กรุณาตรวจสอบอีกครั้ง'}
@@ -101,7 +101,7 @@ const hrProcessLeaveRequest = async ({requestId, status}) => {
                         createBy,
                         timestamp: new Date(),
                         type,
-                        approveBy: 'olotem321'
+                        approveBy
                     })
                 }
             }
@@ -122,20 +122,20 @@ const hrProcessLeaveRequest = async ({requestId, status}) => {
                         createBy,
                         timestamp: new Date(),
                         type,
-                        approveBy: 'olotem321'
+                        approveBy
                     })
                 }
             }
         }
         if(type === 'ลา Extra'){
-            let employeeHoliday = await hrDB('employee_public_holiday').where({emloyeeId, publicHolidayId}).first()
+            let employeeHoliday = await hrDB('employee_public_holiday').where({employeeId, publicHolidayId}).first()
             if(employeeHoliday){
                 if(employeeHoliday.status === 'Used'){
-                    return { status: false, msg: 'สิทธิวันหยุดนี้ถูกใช้ไปแล้ว กรุณาตรวจสอบอีกครั้ง'}   
+                    return { status: false, msg: 'สิทธิวันหยุดนี้ถูกใช้ไปแล้ว กรุณาตรวจสอบอีกครั้ง'}
                 }else{
                     let startDate = moment(date, 'DD/MM/YYYY')
                     const publicHoliday = await hrDB('public_holiday').where({id: publicHolidayId}).first()
-                    await hrDB('employee_public_holiday').where({emloyeeId, publicHolidayId}).update({used_date: startDate.format('YYYY-MM-DD HH:mm:ss'), status: 'Used'})
+                    await hrDB('employee_public_holiday').where({employeeId, publicHolidayId}).update({used_date: startDate.format('YYYY-MM-DD HH:mm:ss'), status: 'Used'})
                     await hrDB('employee_leave').insert({
                         employeeId,
                         startDate: startDate.format('YYYY-MM-DD HH:mm:ss'),
@@ -144,26 +144,26 @@ const hrProcessLeaveRequest = async ({requestId, status}) => {
                         createBy,
                         timestamp: new Date(),
                         type,
-                        approveBy: 'olotem321'
+                        approveBy
                     })
                 }
             }else{
-                return { status: false, msg: 'ไม่พบสิทธิวันหยุดนี้'}   
+                return { status: false, msg: 'ไม่พบสิทธิวันหยุดนี้'}
             }
         }
-        
+
         await hrDB('leave_request').where({id: requestId}).update({status: 'Approve'})
         await hrDB('employee_timetable').where({employeeId, date}).del()
-        
+
         await hrDB('employee_logs').insert({
-            employeeId, 
+            employeeId,
             detail: `อนุมัติ ${type} (${date}): ${remark}`,
-            createBy: 'olotem321',
+            createBy: approveBy,
             timestamp: new Date()
         })
         }
     return {status: true}
-    
+
 }
 
 const getEmployeeLeaveByEmployeeId = async ({employeeId}) => {
@@ -187,7 +187,7 @@ const getPublicHolidayList = async () => {
     return { status: true, publicHolidayList }
 }
 
-const hrProcessTimeScanRequest = async ({ requestId, status }) => {
+const hrProcessTimeScanRequest = async ({ requestId, status, approveBy }) => {
      if(!status){
         await hrDB('finger_scan_request').where({id: requestId}).update({status: 'Decline'})
         return {status: true}
@@ -195,29 +195,29 @@ const hrProcessTimeScanRequest = async ({ requestId, status }) => {
         const requestInfo = await hrDB('finger_scan_request').where({id: requestId}).first()
         let { time, remark, type, employeeId, date } = requestInfo
         await hrDB('finger_scan_request').where({id: requestId}).update({status: 'Approve'})
-        
+
         const timeScanList = await hrDB('finger_scan_time').where({id: employeeId, date})
         const length = timeScanList.length
          if(length > 3 ){
                 await hrDB('finger_scan_request').where({id: requestId}).update({status: 'Decline'})
                 return { status: false, msg: 'ลายนิ้วมือเต็ม ไม่สามารถเพ่ิมได้'}
             }
-        
-        
-        
+
+
+
         const insertScan = async () => {
              await hrDB('finger_scan_time')
                     .insert({
                         id: employeeId, date, time, type
-                    }) 
+                    })
         }
-        
+
         const updateType = async (oldType, newType) => {
           await hrDB('finger_scan_time')
             .where({ id: employeeId, date, type: oldType })
             .update({ type: newType });
         };
-        
+
        // ✅ START
     if (type === 'start') {
       if (length === 0) await insertScan();
@@ -265,13 +265,13 @@ const hrProcessTimeScanRequest = async ({ requestId, status }) => {
     if (type === 'end') {
       await insertScan();
     }
-        
-        
-        
+
+
+
         await hrDB('employee_logs').insert({
-            employeeId, 
+            employeeId,
             detail: `อนุมัติแก้แสกนนิ้ว ${type} ${date} - ${time} : ${remark}`,
-            createBy: 'olotem321',
+            createBy: approveBy,
             timestamp: new Date()
         })
         }
@@ -279,7 +279,7 @@ const hrProcessTimeScanRequest = async ({ requestId, status }) => {
 }
 
 const getEmployeeTimetableByDateByDepartmentId = async ({departmentId, date}) => {
-    
+
 }
 
 const getEmployeeListByDepartmentId = async (departmentId) => {
@@ -440,6 +440,14 @@ const submitEmployeeTimetable = async ({employeeId, date, startTime, breakTime, 
     return {status: true}
 }
 
+const getEmployeeUnapproveRequestByEmployeeId = async ({employeeId}) => {
+  const timetableRequestData = await hrDB('timetable_request').where({employeeId, status: 'Await'})
+  const scanTimeRequestData = await hrDB('finger_scan_request').where({employeeId, status: 'Await'})
+  const leaveRequestData = await hrDB('leave_request').where({employeeId, status: 'Await'})
+
+  return {status: true, timetableRequestData, scanTimeRequestData, leaveRequestData}
+}
+
 module.exports = {
     getLeaveRequestList,
     getScanRequestList,
@@ -465,6 +473,6 @@ module.exports = {
     deleteEmployeeTimetable,
     submitOTByManager,
     sendOTNotifyToLine,
-    submitEmployeeTimetable
-    
+    submitEmployeeTimetable,
+    getEmployeeUnapproveRequestByEmployeeId
 }

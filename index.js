@@ -2,6 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
+const path = require('path')
 const PORT = 2229;
 
 // Middleware (optional)
@@ -11,6 +12,9 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.send('✅ Express server is running on port ' + PORT);
 });
+
+
+
 
 
 // Body Parser Middleware
@@ -30,7 +34,7 @@ app.get('/', (req, res) => {
     app.use('/login', require('./api/authentication'))
     app.use('/deptManager', require('./api/deptManager'))
     app.use('/hr', require('./api/hr'))
-
+    app.use('/public', express.static(path.join(__dirname, 'public')));
 
 // Start server
 app.listen(PORT, () => {

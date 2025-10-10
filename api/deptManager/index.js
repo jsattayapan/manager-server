@@ -8,24 +8,24 @@ router.get('/getEmployeeUnapproveRequest', async (req, res) => {
         const leaveRequestList = await ft.getLeaveRequestList()
         const scanRequestList = await ft.getScanRequestList()
         const timetableRequestList = await ft.getTimetableRequestList()
-        
+
         let dateList = [...leaveRequestList, ...scanRequestList, ...timetableRequestList].map(item => item.date)
         dateList = Array.from(new Set(dateList))
-        
+
         let employeeList = [...leaveRequestList, ...scanRequestList, ...timetableRequestList].map(item => item.employeeId)
         employeeList = Array.from(new Set(employeeList))
         let resultList = []
-        
+
         // ✅ ดึงข้อมูลพนักงานทั้งหมดทีเดียว (ลด query ซ้ำ)
         const allEmployees = {};
         for (const id of employeeList) {
           allEmployees[id] = await ft.getEmployee(id);
         }
-        
+
         for(const id of employeeList){
             const employeeInfo = allEmployees[id];
             for(const date of dateList){
-                
+
                 const timetable = await ft.getTimetableByIdAndDate(id, date)
                 const scanList = await ft.getScanByIdAndDate(id, date)
                 const ot_timetable = await ft.getOtByIdAndDate(id,date)
@@ -35,10 +35,10 @@ router.get('/getEmployeeUnapproveRequest', async (req, res) => {
                     role: employeeInfo.role,
                     date,
                     imageUrl: employeeInfo.imageUrl,
-                    startTime: timetable ? timetable.startTime : '',
-                    breakTime: timetable ? timetable.breakTime : '', 
-                    continueTime: timetable ? timetable.continueTime : '',
-                    endTime: timetable ? timetable.endTime : '',
+                    startTime: timetable ? timetable.startTime : null,
+                    breakTime: timetable ? timetable.breakTime : null,
+                    continueTime: timetable ? timetable.continueTime : null,
+                    endTime: timetable ? timetable.endTime : null,
                     nightShift: timetable ? timetable.nightShift: 0,
                     dayOff: timetable ?  timetable.dayOff ? true : false : false,
                     weeklyDayOff: timetable ? timetable.dayOff ? true : false : false,
@@ -56,10 +56,10 @@ router.get('/getEmployeeUnapproveRequest', async (req, res) => {
                 if(!(obj.timetableRequestList.length === 0 && obj.leaveRequestList.length === 0 && obj.timeScanRequestList.length === 0)){
                     resultList = [...resultList, obj]
                 }
-                
+
             }
         }
-         
+
         res.json({ status: true, employeeList: resultList , dateList })
     }catch (e){
         console.log(e)
@@ -148,7 +148,7 @@ router.get('/getPublicHolidayList', async (req, res) => {
 
 router.post('/getEmployeeTimetableByDateByDepartmentId', async (req, res) => {
     try{
-        const {departmentId, date} = req.body 
+        const {departmentId, date} = req.body
         const employeeList = await ft.getEmployeeListByDepartmentId(departmentId)
         const leaveRequestList = await ft.getLeaveRequestList()
         const scanRequestList = await ft.getScanRequestList()
@@ -165,7 +165,7 @@ router.post('/getEmployeeTimetableByDateByDepartmentId', async (req, res) => {
                     date,
                     imageUrl: emp.imageUrl,
                     startTime: timetable ? timetable.startTime : '',
-                    breakTime: timetable ? timetable.breakTime : '', 
+                    breakTime: timetable ? timetable.breakTime : '',
                     continueTime: timetable ? timetable.continueTime : '',
                     endTime: timetable ? timetable.endTime : '',
                     nightShift: timetable ? timetable.nightShift: 0,
@@ -183,7 +183,7 @@ router.post('/getEmployeeTimetableByDateByDepartmentId', async (req, res) => {
                 }
                 result = [...result, obj]
         }
-        
+
         res.json({status:true, employeeList: result})
      }catch (e){
         console.log(e)
@@ -257,6 +257,17 @@ router.post('/submitOTByManager', async (req, res) => {
 router.post('/submitEmployeeTimetable', async (req, res) => {
     try{
        const result = await ft.submitEmployeeTimetable(req.body)
+        res.json(result)
+     }catch (e){
+        console.log(e)
+        res.json({status:false, msg: 'Error'})
+    }
+})
+
+
+router.post('/getEmployeeUnapproveRequestByEmployeeId', async (req, res) => {
+    try{
+       const result = await ft.getEmployeeUnapproveRequestByEmployeeId(req.body)
         res.json(result)
      }catch (e){
         console.log(e)
